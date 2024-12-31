@@ -21,3 +21,12 @@
 )
 
 (map-set admins tx-sender { active: true })
+;; Read-only function to check if an address is admin
+(define-read-only (is-admin (address principal))
+    (default-to false (get active (map-get? admins address)))
+)
+
+;; Read-only function to validate action type
+(define-read-only (is-valid-action-type (action-type (string-ascii 20)))
+    (is-eq action-type ACTION_TYPE_ASSIGN_ROLE)
+)
