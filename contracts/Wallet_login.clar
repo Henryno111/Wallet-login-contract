@@ -114,3 +114,11 @@
         (ok true)
     )
 )
+(define-public (remove-admin (admin principal))
+    (begin
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        (asserts! (not (is-eq tx-sender admin)) (err ERR_NOT_ADMIN))
+        (map-set admins admin { active: false })
+        (ok true)
+    )
+)
