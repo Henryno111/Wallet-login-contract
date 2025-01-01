@@ -58,3 +58,37 @@
         (ok true)
     )
 )
+(define-map admin-actions
+    uint
+    {
+        proposer: principal,
+        action-type: (string-ascii 20),
+        target: principal,
+        expires: uint,
+        executed: bool
+    }
+)
+
+(define-public (propose-admin-action (action-type (string-ascii 20)) (target principal))
+    (begin
+        (asserts! (is-valid-action-type action-type) (err ERR_INVALID_ACTION_TYPE))
+        (asserts! (not (is-eq target tx-sender)) (err ERR_INVALID_TARGET))
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        
+        (let (
+            (action-id block-height)
+        )
+            (map-set admin-actions
+                action-id
+                {
+                    proposer: tx-sender,
+                    action-type: action-type,
+                    target: target,
+                    expires: (+ block-height u144),
+                    executed: false
+                }
+            )
+            (ok action-id)
+        )
+    )
+)
