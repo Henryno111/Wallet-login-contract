@@ -58,3 +58,67 @@
         (ok true)
     )
 )
+(define-map admin-actions
+    uint
+    {
+        proposer: principal,
+        action-type: (string-ascii 20),
+        target: principal,
+        expires: uint,
+        executed: bool
+    }
+)
+
+(define-public (propose-admin-action (action-type (string-ascii 20)) (target principal))
+    (begin
+        (asserts! (is-valid-action-type action-type) (err ERR_INVALID_ACTION_TYPE))
+        (asserts! (not (is-eq target tx-sender)) (err ERR_INVALID_TARGET))
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        
+        (let (
+            (action-id block-height)
+        )
+            (map-set admin-actions
+                action-id
+                {
+                    proposer: tx-sender,
+                    action-type: action-type,
+                    target: target,
+                    expires: (+ block-height u144),
+                    executed: false
+                }
+            )
+            (ok action-id)
+        )
+    )
+)
+(define-public (execute-admin-action (action-id uint))
+    (let (
+        (action (unwrap! (map-get? admin-actions action-id) 
+                        (err ERR_INVALID_ADMIN_ACTION)))
+    )
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        (asserts! (not (is-eq tx-sender (get proposer action))) (err ERR_NOT_ADMIN))
+        (asserts! (< block-height (get expires action)) (err ERR_ACTION_TIMEOUT))
+        (asserts! (not (get executed action)) (err ERR_INVALID_ADMIN_ACTION))
+        
+        (if (is-eq (get action-type action) ACTION_TYPE_ASSIGN_ROLE)
+            (assign-role-internal (get target action))
+            (err ERR_INVALID_ADMIN_ACTION))
+    )
+)
+
+(define-private (assign-role-internal (target principal))
+    (begin
+        ;; Your role assignment logic here
+        (ok true)
+    )
+)
+(define-public (remove-admin (admin principal))
+    (begin
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        (asserts! (not (is-eq tx-sender admin)) (err ERR_NOT_ADMIN))
+        (map-set admins admin { active: false })
+        (ok true)
+    )
+)
