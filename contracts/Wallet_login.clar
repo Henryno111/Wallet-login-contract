@@ -92,3 +92,25 @@
         )
     )
 )
+(define-public (execute-admin-action (action-id uint))
+    (let (
+        (action (unwrap! (map-get? admin-actions action-id) 
+                        (err ERR_INVALID_ADMIN_ACTION)))
+    )
+        (asserts! (is-admin tx-sender) (err ERR_NOT_ADMIN))
+        (asserts! (not (is-eq tx-sender (get proposer action))) (err ERR_NOT_ADMIN))
+        (asserts! (< block-height (get expires action)) (err ERR_ACTION_TIMEOUT))
+        (asserts! (not (get executed action)) (err ERR_INVALID_ADMIN_ACTION))
+        
+        (if (is-eq (get action-type action) ACTION_TYPE_ASSIGN_ROLE)
+            (assign-role-internal (get target action))
+            (err ERR_INVALID_ADMIN_ACTION))
+    )
+)
+
+(define-private (assign-role-internal (target principal))
+    (begin
+        ;; Your role assignment logic here
+        (ok true)
+    )
+)
